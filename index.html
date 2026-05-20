@@ -2623,15 +2623,39 @@ body {
         // Iniciar
         if (cSlides.length > 0) startAutoCarousel();
 
-        // Parámetro src a Hotmart
-        const urlParams = new URLSearchParams(window.location.search);
-        const srcParam = urlParams.get('src');
-        if (srcParam) {
+        // SCRIPT MAESTRO DE ATRIBUCIÓN (FORZAR FBCLID Y SRC A HOTMART)
+        document.addEventListener("DOMContentLoaded", function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // 1. Extraer los parámetros esenciales de la URL de la lander
+            const fbclid = urlParams.get('fbclid');
+            const src = urlParams.get('src');
+
+            // 2. Si no hay parámetros relevantes, no gastar recursos
+            if (!fbclid && !src) return;
+
+            // 3. Buscar todos los botones y enlaces que apunten a Hotmart
             document.querySelectorAll('a[href^="https://pay.hotmart.com"]').forEach(link => {
-                const sep = link.href.includes('?') ? '&' : '?';
-                link.href = link.href + sep + 'src=' + encodeURIComponent(srcParam);
+                try {
+                    let checkoutUrl = new URL(link.href);
+                    
+                    // Inyectar fbclid si existe en la URL de la lander
+                    if (fbclid) {
+                        checkoutUrl.searchParams.set('fbclid', fbclid);
+                    }
+                    
+                    // Mantener o inyectar el src si existe
+                    if (src) {
+                        checkoutUrl.searchParams.set('src', src);
+                    }
+                    
+                    // Actualizar el enlace del botón con la nueva URL atribuida
+                    link.href = checkoutUrl.toString();
+                } catch (e) {
+                    console.error("Error al procesar enlace de Hotmart:", e);
+                }
             });
-        }
+        });
     </script>
 
     <!-- Scripts base integrados de index.html -->

@@ -70,13 +70,15 @@
   }
   .kanji-bg span {
     position: absolute;
-    font-size: 80px;
+    font-size: clamp(40px, 10vw, 80px);
     opacity: 0.04;
     color: var(--accent);
     animation: floatKanji var(--spd, 20s) linear infinite;
     animation-delay: var(--dl, 0s);
     left: var(--lft, 10%);
     font-family: serif;
+    max-width: 1.2ch;
+    overflow: hidden;
   }
   @keyframes floatKanji {
     0%   { transform: translateY(110vh) rotate(-5deg); opacity: 0; }
@@ -706,8 +708,10 @@
   .oferta-timer { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 16px; }
   .oferta-timer-block {
     display: flex; flex-direction: column; align-items: center; gap: 4px;
-    background: rgba(255,255,255,.05); border-radius: 14px; padding: 12px 20px;
-    border: 1px solid rgba(123,47,255,.3); min-width: 80px;
+    background: rgba(255,255,255,.05); border-radius: 14px;
+    padding: 12px clamp(8px, 4vw, 20px);
+    border: 1px solid rgba(123,47,255,.3);
+    min-width: clamp(60px, 18vw, 80px);
   }
   .oferta-timer-num {
     font-family: 'Bangers', cursive;
@@ -950,8 +954,9 @@
      STICKY BOTTOM BAR
   ══════════════════════════════ */
   .sticky-bar {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    margin: 0 auto;
+    position: fixed; bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
     width: 100%;
     max-width: 500px;
     z-index: 100;
@@ -959,13 +964,12 @@
     backdrop-filter: blur(12px);
     border-top: 1px solid rgba(123,47,255,.4);
     box-shadow: 0 -4px 30px rgba(123,47,255,.3);
-    padding: 12px 16px 16px;
+    padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
     display: flex; flex-direction: column; align-items: center; gap: 8px;
-    transform: translateY(100%);
     transition: transform .5s ease;
     box-sizing: border-box;
   }
-  .sticky-bar.visible { transform: translateY(0); }
+  .sticky-bar.visible { transform: translateX(-50%) translateY(0); }
   .sticky-bar__price {
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
   }
@@ -995,7 +999,7 @@
   /* ══════════════════════════════
      RESPONSIVE: extra small devices (defensive design)
      ══════════════════════════════ */
-  @media (max-width: 360px) {
+  @media (max-width: 400px) {
     .car-mosaic { grid-template-columns: 1fr; }
   }
   @media (max-width: 340px) {
@@ -1007,8 +1011,17 @@
     .ben-card { padding: 14px 12px; gap: 10px; }
     .dolor-item { padding: 14px 12px; gap: 10px; }
     .oferta-price-card { padding: 18px 12px; }
-    .oferta-timer-block { padding: 8px 10px; min-width: 65px; }
-    .oferta-timer-num { font-size: clamp(32px, 8vw, 42px); }
+    .oferta-timer-block { padding: 8px 10px; min-width: 60px; }
+    .oferta-timer-num { font-size: clamp(28px, 8vw, 38px); }
+  }
+
+  /* ── touch-action: elimina el delay de 300ms en iOS/Android ── */
+  .land-cta,
+  .oferta-cta,
+  .sticky-bar__cta,
+  .faq-question,
+  .oferta-garantia-trigger {
+    touch-action: manipulation;
   }
 
   /* ══════════════════════════════
@@ -1018,6 +1031,14 @@
     .land-wrap { max-width: 560px; }
     .mosaico-grid { grid-template-columns: repeat(4, 1fr); }
     .sticky-bar { max-width: 560px; }
+  }
+
+  @media (min-width: 768px) {
+    body {
+      background: radial-gradient(ellipse at 50% 0%, #1A0A2E 0%, var(--ink) 65%);
+    }
+    .land-wrap { max-width: 580px; }
+    .sticky-bar { max-width: 580px; }
   }
   </style>
 </head>

@@ -9,33 +9,104 @@
     <!-- PRECARGA RECURSOS CRITICOS -->
     <!-- Removido preload de imagen innecesaria -->
     <link rel="preload" as="image"
-        href="https://res.cloudinary.com/daijidw3t/video/upload/f_auto,q_auto/Camisetas3mod_t79kiq.jpg"
+        href="https://assets.recursoweb.lat/r2_assets/Camisetas3mod_t79kiq.jpg"
         fetchpriority="high">
-    <link rel="preconnect" href="https://res.cloudinary.com">
-    <link rel="preconnect" href="https://d1yei2z3i6k35z.cloudfront.net">
+    <link rel="preconnect" href="https://assets.recursoweb.lat">
+    <!-- Preconnect to R2 assets domain -->
 
-    <!-- Meta Pixel Code (Safely Deferred) -->
+        <!-- TRACKER DE ATRIBUCIÓN HYBRID CAPI & META PIXEL -->
     <script>
-        !function (f, b, e, v, n, t, s) {
-            if (f.fbq) return; n = f.fbq = function () {
-                n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments)
-            };
-            if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
-            n.queue = [];
-            
-            // Retrasar solo la descarga pesada de Facebook por 3 segundos
-            setTimeout(function() {
-                t = b.createElement(e); t.async = !0;
-                t.src = v; s = b.getElementsByTagName(e)[0];
-                s.parentNode.insertBefore(t, s);
-            }, 3000);
-        }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
-        
-        fbq('init', '1406880024051799');
-        fbq('track', 'PageView');
+    (function() {
+      const CONFIG = {
+        campaignSlug: "megapack-anime",
+        backendUrl: "https://ehdhbaytbbxqmgauiloh.supabase.co/functions/v1/tracker-api",
+        pixelId: "1149827361556540",
+        testEventCode: "" // Opcional: Escribe aquí tu token de prueba de Meta si vas a debuggear
+      };
+
+      if(!window.fbq){
+        !(function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)})(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', CONFIG.pixelId);
+      }
+
+      function getCookie(n){const v=`; ${document.cookie}`;const p=v.split(`; ${n}=`);if(p.length===2)return p.pop().split(';').shift();return null}
+      function setCookie(n,v,d=30){const date=new Date();date.setTime(date.getTime()+(d*24*60*60*1000));document.cookie=`${n}=${v}; expires=${date.toUTCString()}; path=/; SameSite=Lax; Secure`}
+      function genUUID(){return "evt_"+Date.now()+"_"+Math.random().toString(36).substr(2,9)}
+      function getOrGenFBP(){let f=getCookie('_fbp');if(!f){const r=Math.floor(Math.random()*2147483647);f=`fb.1.${Date.now()}.${r}`;setCookie('_fbp',f)}return f}
+      function getOrGenFBC(){let f=getCookie('_fbc');const u=new URLSearchParams(window.location.search);const c=u.get('fbclid');if(c){f=`fb.1.${Date.now()}.${c}`;setCookie('_fbc',f)}return f}
+      function getOrGenExtId(){let e=localStorage.getItem('track_external_id');if(!e){e="ext_"+Math.random().toString(36).substr(2,12);localStorage.setItem('track_external_id',e)}return e}
+
+      const utms={};
+      ["utm_source","utm_medium","utm_campaign","utm_content","utm_term"].forEach(p=>{
+        const v=new URLSearchParams(window.location.search).get(p);
+        if(v){utms[p]=v;localStorage.setItem('track_'+p,v)}else{utms[p]=localStorage.getItem('track_'+p)||""}
+      });
+
+      function getSessionSrc(){
+        const u=new URLSearchParams(window.location.search);
+        const s=u.get('src');
+        if(s){localStorage.setItem('track_src',s);return s}
+        return localStorage.getItem('track_src')||"";
+      }
+
+      const fbp=getOrGenFBP(), fbc=getOrGenFBC(), extId=getOrGenExtId(), sessionSrc=getSessionSrc();
+
+      async function fireEvent(name, id, val=0, cur="USD"){
+        const cData={}; if(val>0){cData.value=val;cData.currency=cur}
+        fbq('track', name, cData, {eventID: id});
+        try {
+          await fetch(CONFIG.backendUrl+'/track',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({
+              campaign_slug:CONFIG.campaignSlug, event_name:name, event_id:id,
+              fbp, fbc, external_id:extId, utm_source:utms.utm_source,
+              utm_medium:utms.utm_medium, utm_campaign:utms.utm_campaign,
+              utm_content:utms.utm_content, utm_term:utms.utm_term,
+              value:val, currency:cur, test_event_code:CONFIG.testEventCode
+            })
+          });
+        } catch(e){}
+      }
+
+      fireEvent("PageView", genUUID());
+
+      function bindHotmart(){
+        document.querySelectorAll('a[href*="pay.hotmart.com"]').forEach(link=>{
+          if(link.dataset.trackingBound) return;
+          link.dataset.trackingBound="true";
+          link.addEventListener('click', function(e){
+            const chkId=genUUID();
+            const cleanSck = CONFIG.campaignSlug + "|" + chkId;
+            try {
+              const u=new URL(this.href); 
+              u.searchParams.set('sck', cleanSck); 
+              if(!u.searchParams.has('src') && sessionSrc){
+                u.searchParams.set('src', sessionSrc);
+              }
+              const urlParams = new URLSearchParams(window.location.search);
+              const fbclid = urlParams.get('fbclid') || getCookie('_fbc');
+              if(fbclid && !u.searchParams.has('fbclid')) {
+                u.searchParams.set('fbclid', fbclid);
+              }
+              ["utm_source","utm_medium","utm_campaign","utm_content","utm_term"].forEach(p=>{
+                if(!u.searchParams.has(p) && utms[p]){
+                  u.searchParams.set(p, utms[p]);
+                }
+              });
+              this.href=u.toString();
+            }catch(err){}
+          });
+        });
+      }
+      
+      if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", bindHotmart);
+      else bindHotmart();
+      new MutationObserver(bindHotmart).observe(document.body, {childList:true, subtree:true});
+    })();
     </script>
     <noscript><img height="1" width="1" style="display:none"
-            src="https://www.facebook.com/tr?id=1406880024051799&ev=PageView&noscript=1" /></noscript>
+            src="https://www.facebook.com/tr?id=1149827361556540&ev=PageView&noscript=1" /></noscript>
 
     <!-- ESTILOS Y FUENTES -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2032,9 +2103,9 @@ body {
                     Calidad Real
                 </div>
 
-                <video loop muted playsinline preload="none" poster="https://res.cloudinary.com/daijidw3t/video/upload/f_auto,q_auto/Camisetas3mod_t79kiq.jpg"
+                <video loop muted playsinline preload="none" poster="https://assets.recursoweb.lat/r2_assets/Camisetas3mod_t79kiq.jpg"
                     class="lazy-video w-full h-full object-cover relative z-10 opacity-90 hover:opacity-100 transition-opacity">
-                    <source src="https://res.cloudinary.com/daijidw3t/video/upload/f_auto,q_auto/Camisetas3mod_t79kiq">
+                    <source src="https://assets.recursoweb.lat/r2_assets/Camisetas3mod_t79kiq.mp4">
                 </video>
             </div>
 
@@ -2116,19 +2187,19 @@ body {
                 class="relative max-w-3xl mx-auto rounded-3xl overflow-hidden border border-neonPink/30 bg-darkCard shadow-[0_0_50px_rgba(232,48,140,0.15)] p-2">
                 <div id="modern-carousel" class="relative aspect-square rounded-2xl overflow-hidden bg-black">
                     <!-- Imágenes -->
-                    <img src="https://d1yei2z3i6k35z.cloudfront.net/13578013/69cae3d871a115.91492639_1.webp"
+                    <img src="https://assets.recursoweb.lat/r2_assets/69cae3d871a115.91492639_1.webp"
                         class="c-slide absolute inset-0 w-full h-full object-cover transition-all duration-700 opacity-100 z-10"
                         alt="Diseño 1" loading="lazy" decoding="async" fetchpriority="low">
-                    <img src="https://d1yei2z3i6k35z.cloudfront.net/13578013/69cae3d86be2a5.40682413_2.webp"
+                    <img src="https://assets.recursoweb.lat/r2_assets/69cae3d86be2a5.40682413_2.webp"
                         class="c-slide absolute inset-0 w-full h-full object-cover transition-all duration-700 opacity-0 translate-x-full"
                         alt="Diseño 2" loading="lazy" decoding="async" fetchpriority="low">
-                    <img src="https://d1yei2z3i6k35z.cloudfront.net/13578013/69cae3d8715952.36039764_3.webp"
+                    <img src="https://assets.recursoweb.lat/r2_assets/69cae3d8715952.36039764_3.webp"
                         class="c-slide absolute inset-0 w-full h-full object-cover transition-all duration-700 opacity-0 translate-x-full"
                         alt="Diseño 3" loading="lazy" decoding="async" fetchpriority="low">
-                    <img src="https://d1yei2z3i6k35z.cloudfront.net/13578013/69cae3d8696551.26482116_4.webp"
+                    <img src="https://assets.recursoweb.lat/r2_assets/69cae3d8696551.26482116_4.webp"
                         class="c-slide absolute inset-0 w-full h-full object-cover transition-all duration-700 opacity-0 translate-x-full"
                         alt="Diseño 4" loading="lazy" decoding="async" fetchpriority="low">
-                    <img src="https://d1yei2z3i6k35z.cloudfront.net/13578013/69cae3d86d4114.34730501_5.webp"
+                    <img src="https://assets.recursoweb.lat/r2_assets/69cae3d86d4114.34730501_5.webp"
                         class="c-slide absolute inset-0 w-full h-full object-cover transition-all duration-700 opacity-0 translate-x-full"
                         alt="Diseño 5" loading="lazy" decoding="async" fetchpriority="low">
 
@@ -2179,10 +2250,10 @@ body {
                     <span class="w-2 h-2 rounded-full bg-neonCyan animate-ping"></span> Detalle 100% Real
                 </div>
 
-                <video loop muted playsinline preload="none" poster="https://res.cloudinary.com/daijidw3t/video/upload/v1777496850/Baki_2mod_abhuia.jpg"
+                <video loop muted playsinline preload="none" poster="https://assets.recursoweb.lat/r2_assets/Baki_2mod_abhuia.jpg"
                     class="lazy-video w-full h-full object-cover relative z-10 transition-transform duration-700 hover:scale-105">
                     <source
-                        src="https://res.cloudinary.com/daijidw3t/video/upload/f_auto,q_auto/v1777496850/Baki_2mod_abhuia">
+                        src="https://assets.recursoweb.lat/r2_assets/Baki_2mod_abhuia.mp4">
                 </video>
             </div>
 
@@ -2634,38 +2705,7 @@ body {
         // Iniciar
         if (cSlides.length > 0) startAutoCarousel();
 
-        // SCRIPT MAESTRO DE ATRIBUCIÓN (FORZAR FBCLID Y SRC A HOTMART)
-        document.addEventListener("DOMContentLoaded", function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            
-            // 1. Extraer los parámetros esenciales de la URL de la lander
-            const fbclid = urlParams.get('fbclid');
-            const src = urlParams.get('src');
-
-            // 2. Si no hay parámetros relevantes, no gastar recursos
-            if (!fbclid && !src) return;
-
-            // 3. Buscar todos los botones y enlaces que apunten a Hotmart
-            document.querySelectorAll('a[href^="https://pay.hotmart.com"]').forEach(link => {
-                try {
-                    let checkoutUrl = new URL(link.href);
-                    
-                    // Inyectar fbclid si existe en la URL de la lander
-                    if (fbclid) {
-                        checkoutUrl.searchParams.set('fbclid', fbclid);
-                    }
-                    
-                    // Mantener o inyectar el src si existe
-                    if (src) {
-                        checkoutUrl.searchParams.set('src', src);
-                    }
-                    
-                    // Actualizar el enlace del botón con la nueva URL atribuida
-                    link.href = checkoutUrl.toString();
-                } catch (e) {
-                    console.error("Error al procesar enlace de Hotmart:", e);
-                }
-            });
+        // Script maestro de atribución migrado al tracker híbrido del <head>
         });
     </script>
 
